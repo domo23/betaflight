@@ -78,11 +78,11 @@
 #endif /* HSI_VALUE */
 
 #define PLL_M     8
-#define PLL_N     432
+#define PLL_N     216
 #define PLL_P     RCC_PLLP_DIV2 /* 2 */
 #define PLL_Q     9
 
-#define PLL_SAIN  384
+#define PLL_SAIN  192
 #define PLL_SAIQ  7
 #define PLL_SAIP  RCC_PLLSAIP_DIV8
 
@@ -289,7 +289,7 @@ void OverclockRebootIfNecessary(uint32_t overclockLevel)
     const pllConfig_t * const pll = overclockLevels + overclockLevel;
 
     // Reboot to adjust overclock frequency
-    if (SystemCoreClock != (pll->n / pll->p) * 1000000U) {
+    if (SystemCoreClock != (pll->n / pll->p ) * (HSE_VALUE / PLL_M)) {
         persistentObjectWrite(PERSISTENT_OBJECT_OVERCLOCK_LEVEL, overclockLevel);
         __disable_irq();
         NVIC_SystemReset();
@@ -317,7 +317,7 @@ void SystemInit(void)
 
     SystemInitOC();
 
-    SystemCoreClock = (pll_n / pll_p) * 1000000;
+    SystemCoreClock = HSE_VALUE / PLL_M / PLL_P * PLL_N;
 
     /* FPU settings ------------------------------------------------------------*/
 #if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
@@ -373,7 +373,7 @@ void SystemInit(void)
     /* Configure the system clock to specified frequency */
     SystemClock_Config();
 
-    if (SystemCoreClock != (pll_n / pll_p) * 1000000) {
+    if (SystemCoreClock != (pll_n / pll_p ) * (HSE_VALUE / PLL_M)) {
         // There is a mismatch between the configured clock and the expected clock in portable.h
         while (1);
     }
